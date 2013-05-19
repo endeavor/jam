@@ -1,4 +1,4 @@
-// Compile: g++ -std=c++0x jam2.cpp
+// Compile: g++ -std=c++0x jam2.cpp -o jam2 `pkg-config --cflags --libs cairo`
 #include <stdio.h>
 #include <exception>
 #include <stdexcept>
@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cairo/cairo.h>
 
 /// 
 /// Uncommend DEBUG define to enable console lons
@@ -165,6 +166,43 @@ public:
             out << i->getX() << " " << i->getY() << " " << i->isRotated() << std::endl;
 #endif
         }
+
+        generateImage();
+    }
+
+protected:
+    void generateImage(void)
+    {
+        int scale = 50;
+        cairo_surface_t* surface;
+        cairo_t* cr;
+
+        surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width * scale, height * scale);
+        cr = cairo_create(surface);
+
+        cairo_set_source_rgb(cr, 1, 1, 1);
+        cairo_rectangle(cr, 0, 0, width * scale, height * scale);
+        cairo_fill(cr);
+
+        cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+        cairo_set_font_size(cr, scale);
+
+        for (auto i = boxes.begin(); i != boxes.end(); i++) {
+            cairo_set_source_rgb(cr, 1, 1, 0);
+            cairo_rectangle(cr, i->getX() * scale, i->getY() * scale, i->getWidth() * scale, i->getHeight() * scale);
+            cairo_fill_preserve(cr);
+            cairo_set_source_rgb(cr, 0, 0, 0.7);
+            cairo_set_line_width(cr, 1);
+            cairo_stroke_preserve(cr);
+            cairo_move_to(cr, i->getX() * scale, i->getY() * scale);
+            cairo_set_source_rgb(cr, 0, 0, 0);
+            cairo_show_text(cr, "1");
+            cairo_stroke(cr);
+        }
+        cairo_surface_write_to_png(surface, "jam2.png");
+
+        cairo_destroy(cr);
+        cairo_surface_destroy(surface);
     }
 
 private:
