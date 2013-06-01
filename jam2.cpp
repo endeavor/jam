@@ -1,13 +1,4 @@
 // Compile: g++ -std=c++0x jam2.cpp -o jam2 `pkg-config --cflags --libs cairo`
-#include <stdio.h>
-#include <exception>
-#include <stdexcept>
-#include <iostream>
-#include <vector>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
-#include <cairo/cairo.h>
 
 /// 
 /// Uncommend DEBUG define to enable console lons
@@ -18,6 +9,18 @@
 #define DEBUG_LOG(fmt, msg...) { printf("[DEBUG] " fmt "\n", ##msg); }
 #else
 #define DEBUG_LOG(msg...) {}
+#endif
+
+#include <stdio.h>
+#include <exception>
+#include <stdexcept>
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#ifdef DEBUG
+#include <cairo/cairo.h>
 #endif
 
 ///
@@ -146,12 +149,16 @@ public:
             i->move(width, 0);
             width += i->getWidth();
         }
+
+        //for (auto i = boxes.end(); i != boxes.begin(); i--) {
+        //    i->move(width, 0);
+        //    width += i->getWidth();
+        //}
     }
 
     void print(std::ostream& out)
     {
         DEBUG_LOG("=== Output ============");
-        out << width << " " << height << std::endl;
 
         std::sort(boxes.begin(), boxes.end(), 
             [&] (Box x, Box y) {
@@ -159,18 +166,23 @@ public:
             }
         );
 
-        for (auto i = boxes.begin(); i != boxes.end(); i++) {
 #ifdef DEBUG
+        DEBUG_LOG("Size: %d x %d", width, height);
+        for (auto i = boxes.begin(); i != boxes.end(); i++) {
             DEBUG_LOG("[%d] %d,%d (%dx%d) %d", i->getIndex(), i->getX(), i->getY(), i->getWidth(), i->getHeight(), i->isRotated());
-#else
-            out << i->getX() << " " << i->getY() << " " << i->isRotated() << std::endl;
-#endif
         }
 
         generateImage();
+#else // DEBUG
+        out << width << " " << height << std::endl;
+        for (auto i = boxes.begin(); i != boxes.end(); i++) {
+            out << i->getX() << " " << i->getY() << " " << i->isRotated() << std::endl;
+        }
+#endif // DEBUG
     }
 
 protected:
+#ifdef DEBUG
     void generateImage(void)
     {
         int scale = 50;
@@ -204,6 +216,7 @@ protected:
         cairo_destroy(cr);
         cairo_surface_destroy(surface);
     }
+#endif // DEBUG
 
 private:
     std::vector<Box> boxes;
